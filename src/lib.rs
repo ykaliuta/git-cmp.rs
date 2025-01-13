@@ -1,4 +1,4 @@
-use git2::{Commit, FileFavor, Index, MergeOptions, Oid, Repository};
+use git2::{Commit, FileFavor, Index, IndexConflict, MergeOptions, Oid, Repository};
 use std::ffi::OsString;
 use std::os::unix::ffi::OsStringExt;
 
@@ -65,6 +65,23 @@ pub fn cmp_branches(
     Ok((merge, our.id()))
 }
 
+fn conflict_path(c: &IndexConflict) -> Vec<u8> {
+    c.ancestor
+        .as_ref()
+        .or(c.our.as_ref())
+        .or(c.their.as_ref())
+        .unwrap()
+        .path
+        .clone()
+}
+
+fn clear_conflict(idx: &mut Index, c: &IndexConflict) {
+    let path = OsString::from_vec(conflict_path(c));
+    for i in 1..=3 {
+        let _ = idx.remove(path.as_ref(), i);
+    }
+}
+
 fn merge_trees_theirs(
     repo: &Repository,
     base: &Commit,
@@ -89,12 +106,8 @@ fn merge_trees_theirs(
     for conflict in entries.iter() {
         if let Some(ref their) = conflict.their {
             index.add(&their)?;
-
-            let path = OsString::from_vec(conflict.their.as_ref().unwrap().path.clone());
-            for i in 1..=3 {
-                let _ = index.remove(path.as_ref(), i);
-            }
         }
+        clear_conflict(&mut index, &conflict);
     }
 
     Ok(index)
