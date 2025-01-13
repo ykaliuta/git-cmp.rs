@@ -1,4 +1,4 @@
-use git2::{Commit, Index, Oid, Repository};
+use git2::{Commit, FileFavor, Index, MergeOptions, Oid, Repository};
 use std::ffi::OsString;
 use std::os::unix::ffi::OsStringExt;
 
@@ -75,8 +75,10 @@ fn merge_trees_theirs(
     let our_tree = our.tree()?;
     let their_tree = their.tree()?;
 
-    let mut index = repo.merge_trees(&base_tree, &our_tree, &their_tree, None)?;
+    let mut opts = MergeOptions::new();
+    opts.file_favor(FileFavor::Theirs);
 
+    let mut index = repo.merge_trees(&base_tree, &our_tree, &their_tree, Some(&opts))?;
     if !index.has_conflicts() {
         return Ok(index);
     }
