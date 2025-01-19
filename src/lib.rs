@@ -1,4 +1,4 @@
-use git2::{Commit, FileFavor, Index, IndexConflict, MergeOptions, Oid, Repository};
+use git2::{Commit, FileFavor, Index, IndexConflict, MergeOptions, Object, Oid, Repository};
 use std::ffi::OsString;
 use std::os::unix::ffi::OsStringExt;
 
@@ -30,7 +30,7 @@ pub fn cmp_commits(repo: &Repository, commit_ids: &Vec<String>) -> Result<(Oid, 
 
     let base = other.parents().next().unwrap();
 
-    let merge = merge_trees(repo, &base, &our_parent, other)?;
+    let merge = merge_commits_to_oid(repo, &base, &our_parent, other)?;
     Ok((merge, our.id()))
 }
 
@@ -61,7 +61,7 @@ pub fn cmp_branches(
     let our_base = repo.find_commit(our_base_oid)?;
     let their_base = repo.find_commit(their_base_oid)?;
 
-    let merge = merge_trees(repo, &their_base, &our_base, other)?;
+    let merge = merge_commits_to_oid(repo, &their_base, &our_base, other)?;
     Ok((merge, our.id()))
 }
 
@@ -82,15 +82,15 @@ fn clear_conflict(idx: &mut Index, c: &IndexConflict) {
     }
 }
 
-fn merge_trees_theirs(
+fn merge_objects_to_index(
     repo: &Repository,
-    base: &Commit,
-    our: &Commit,
-    their: &Commit,
+    base: &Object,
+    our: &Object,
+    their: &Object,
 ) -> Result<Index, git2::Error> {
-    let base_tree = base.tree()?;
-    let our_tree = our.tree()?;
-    let their_tree = their.tree()?;
+    let base_tree = base.peel_to_tree()?;
+    let our_tree = our.peel_to_tree()?;
+    let their_tree = their.peel_to_tree()?;
 
     let mut opts = MergeOptions::new();
     opts.file_favor(FileFavor::Theirs);
@@ -113,13 +113,24 @@ fn merge_trees_theirs(
     Ok(index)
 }
 
-fn merge_trees(
+fn merge_objects_to_oid(
+    repo: &Repository,
+    base: &Object,
+    our: &Object,
+    their: &Object,
+) -> Result<Oid, git2::Error> {
+    let mut index = merge_objects_to_index(repo, base, our, their)?;
+
+    index.write_tree_to(repo)
+}
+
+fn merge_commits_to_oid(
     repo: &Repository,
     base: &Commit,
     our: &Commit,
     their: &Commit,
 ) -> Result<Oid, git2::Error> {
-    let mut index = merge_trees_theirs(repo, base, our, their)?;
+    merge_objects_to_oid(repo, base.as_object(), our.as_object(), their.as_object())
+}
 
-    index.write_tree_to(repo)
 }
