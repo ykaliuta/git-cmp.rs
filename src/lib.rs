@@ -30,7 +30,7 @@ pub fn cmp_commits(repo: &Repository, commit_ids: &Vec<String>) -> Result<(Oid, 
 
     let base = other.parents().next().unwrap();
 
-    let merge = merge_trees(repo, &base, &our_parent, other)?;
+    let merge = merge_commits_to_oid(repo, &base, &our_parent, other)?;
     Ok((merge, our.id()))
 }
 
@@ -61,7 +61,7 @@ pub fn cmp_branches(
     let our_base = repo.find_commit(our_base_oid)?;
     let their_base = repo.find_commit(their_base_oid)?;
 
-    let merge = merge_trees(repo, &their_base, &our_base, other)?;
+    let merge = merge_commits_to_oid(repo, &their_base, &our_base, other)?;
     Ok((merge, our.id()))
 }
 
@@ -82,7 +82,7 @@ fn clear_conflict(idx: &mut Index, c: &IndexConflict) {
     }
 }
 
-fn merge_trees_theirs(
+fn merge_commits_to_index(
     repo: &Repository,
     base: &Commit,
     our: &Commit,
@@ -113,13 +113,13 @@ fn merge_trees_theirs(
     Ok(index)
 }
 
-fn merge_trees(
+fn merge_commits_to_oid(
     repo: &Repository,
     base: &Commit,
     our: &Commit,
     their: &Commit,
 ) -> Result<Oid, git2::Error> {
-    let mut index = merge_trees_theirs(repo, base, our, their)?;
+    let mut index = merge_commits_to_index(repo, base, our, their)?;
 
     index.write_tree_to(repo)
 }
