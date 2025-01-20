@@ -31,7 +31,9 @@ pub fn cmp_commits(repo: &Repository, commit_ids: &Vec<String>) -> Result<(Oid, 
     let base = other.parents().next().unwrap();
 
     let merge = merge_commits_to_oid(repo, &base, &our_parent, other)?;
-    Ok((merge, our.id()))
+    let ours = commits.into_iter().skip(1).collect::<Vec<_>>();
+    let squash = squash_commits(repo, &ours)?;
+    Ok((merge, squash))
 }
 
 pub fn cmp_branches(
@@ -133,4 +135,18 @@ fn merge_commits_to_oid(
     merge_objects_to_oid(repo, base.as_object(), our.as_object(), their.as_object())
 }
 
+fn squash_commits(repo: &Repository, commits: &Vec<Commit>) -> Result<Oid, git2::Error> {
+    let merge = Ok(commits[0].as_object().id());
+
+    commits.iter().skip(1).fold(merge, |merge, cur| {
+        merge.and_then(|merge| {
+            //let merge = repo.find_object(merge, None)?;
+            merge_objects_to_oid(
+                repo,
+                &cur.parents().next().unwrap().as_object(),
+                &repo.find_object(merge, None)?,
+                &cur.as_object(),
+            )
+        })
+    })
 }
