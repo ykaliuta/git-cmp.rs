@@ -13,9 +13,11 @@ struct Cli {
 #[derive(Subcommand, Debug)]
 enum Command {
     Commit {
-        /// <other commit> [<our commit>]
-        /// Default: HEAD
-        #[arg(required = true, num_args(1..=2))]
+        /// <other commit> [<our commit>...]
+        /// Default: HEAD.
+        /// If more than one <our commit>s provided,
+        /// they all squashed before comparison with the <other commit>
+        #[arg(required = true, num_args(1..))]
         commits: Vec<String>,
     },
     Branch {

@@ -6,7 +6,14 @@ It is implemented by cherry-picking one commit to the parent of
 another with automatic resolution of conflicts with "their" policy and
 running `git diff` on the resulting tree with another commit's tree.
 
-Since it's implemented via merging, the same logic is applied to
+This basic logic is extented to check squashed commit as well. In this
+scenario the backported commit consist of several upstream
+commits. Instead of one upstream commit, the program accepts list of
+the those squashed commits, squashes all upstream commits to the first
+one (with the same policy `theirs`), then cherry-picks backported to
+the parent of the first upstream and runs diff between that two trees.
+
+Since it all is implemented via merging, the same logic is applied to
 another usecase -- comparing rebased branches. The usecase is to
 compare changes on the feature branch which is actively developed and
 rebased agaist its upstream branch since plain `git diff` between 2
@@ -18,7 +25,7 @@ with any state of the repository.
 ## Usage
 
 ```
-git-cmp commit <one commit> [another commit]
+git-cmp commit <backported commit> [upstream commits...]
 ```
 
 where `another commit` is `HEAD` by default
