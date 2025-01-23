@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 use git2::{Commit, FileFavor, Index, IndexConflict, MergeOptions, Object, Oid, Repository};
 use std::ffi::OsString;
 use std::os::unix::ffi::OsStringExt;
