@@ -15,12 +15,12 @@ fn revs_to_commits<'a, 'b>(repo: &'a Repository, refs: &'b Vec<String>) -> Vec<C
         .collect::<Vec<_>>()
 }
 
-pub fn cmp_commits(repo: &Repository, commit_ids: &Vec<String>) -> Result<(Oid, Oid), git2::Error> {
-    let commit_ids = &mut commit_ids.clone();
+pub fn cmp_commits(repo: &Repository, commit_ids: &[String]) -> Result<(Oid, Oid), git2::Error> {
+    let mut commit_ids = commit_ids.to_owned();
     if commit_ids.len() < 2 {
         commit_ids.push("HEAD".to_string());
     }
-    let commits = revs_to_commits(repo, commit_ids);
+    let commits = revs_to_commits(repo, &commit_ids);
 
     if commits.len() != commit_ids.len() {
         return Err(git2::Error::from_str("Some commits were not found."));
@@ -40,16 +40,16 @@ pub fn cmp_commits(repo: &Repository, commit_ids: &Vec<String>) -> Result<(Oid, 
 
 pub fn cmp_branches(
     repo: &Repository,
-    commit_ids: &Vec<String>,
+    commit_ids: &[String],
 ) -> Result<(Oid, Oid), git2::Error> {
-    let commit_ids = &mut commit_ids.clone();
+    let mut commit_ids = commit_ids.to_owned();
     if commit_ids.len() < 2 {
         commit_ids.push("main".to_string());
     }
     if commit_ids.len() < 3 {
         commit_ids.push("HEAD".to_string());
     }
-    let commits = revs_to_commits(repo, commit_ids);
+    let commits = revs_to_commits(repo, &commit_ids);
 
     if commits.len() != commit_ids.len() {
         return Err(git2::Error::from_str("Some commits were not found."));
