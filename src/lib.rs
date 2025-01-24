@@ -15,15 +15,26 @@ fn revs_to_commits<'a>(repo: &'a Repository, refs: &[String]) -> Vec<Commit<'a>>
         .collect::<Vec<_>>()
 }
 
-pub fn cmp_commits(repo: &Repository, commit_ids: &[String]) -> Result<(Oid, Oid), git2::Error> {
+pub fn cmp_commits(
+    repo: &Repository,
+    commit_ids: &[String],
+    autofetch: bool,
+) -> Result<(Oid, Oid), git2::Error> {
     let mut commit_ids = commit_ids.to_owned();
-    if commit_ids.len() < 2 {
+    if !autofetch && commit_ids.len() < 2 {
         commit_ids.push("HEAD".to_string());
     }
-    let commits = revs_to_commits(repo, &commit_ids);
+
+    let mut commits = revs_to_commits(repo, &commit_ids);
 
     if commits.len() != commit_ids.len() {
         return Err(git2::Error::from_str("Some commits were not found."));
+    }
+
+    let mut new_commits;
+    if autofetch {
+        new_commits = commit_to_upstreams(repo, &commits[0]);
+        commits.append(&mut new_commits);
     }
 
     let other = &commits[0];
@@ -148,4 +159,33 @@ fn squash_commits(repo: &Repository, commits: &Vec<Commit>) -> Result<Oid, git2:
             )
         })
     })
+}
+
+// Handle ^commit <SHA1>
+//        ^(cherry picked from commit <SHA1>)
+fn line_to_upstream(line: &str) -> Option<&str> {
+    let mut words = line.split_ascii_whitespace();
+    let first = words.next();
+    let second = words.next();
+
+    match (first, second) {
+        (Some("commit"), sec) => sec,
+        (Some("(cherry"), Some("picked")) => {
+            if let Some(sha1) = words.nth(2) {
+                Some(&sha1[..sha1.len() - 1])
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+fn commit_to_upstreams<'a>(repo: &'a Repository, commit: &Commit) -> Vec<Commit<'a>> {
+    let message: std::str::Lines = commit.message().unwrap().lines();
+
+    message.filter_map(line_to_upstream)
+        .filter_map(|u| Oid::from_str(u).ok())
+        .filter_map(|u| repo.find_commit(u).ok())
+        .collect::<Vec<_>>()
 }

@@ -21,6 +21,10 @@ enum Command {
         /// they all squashed before comparison with the <other commit>
         #[arg(required = true, num_args(1..))]
         commits: Vec<String>,
+
+        /// autofetch commit IDs from the commit message
+        #[arg(long)]
+        autofetch: bool,
     },
     Branch {
         /// <old branch> [<common upstream> [<current branch>]]
@@ -35,7 +39,7 @@ fn main() {
     let repo = repo_open();
 
     let cmp = match &cli.command {
-        Command::Commit { commits } => cmp_commits(&repo, commits),
+        Command::Commit { commits, autofetch } => cmp_commits(&repo, commits, *autofetch),
         Command::Branch { commits } => cmp_branches(&repo, commits),
     };
 
