@@ -109,9 +109,9 @@ fn merge_objects_to_index(
 
     for conflict in entries.iter() {
         if let Some(ref their) = conflict.their {
-            index.add(&their)?;
+            index.add(their)?;
         }
-        clear_conflict(&mut index, &conflict);
+        clear_conflict(&mut index, conflict);
     }
 
     Ok(index)
@@ -145,9 +145,9 @@ fn squash_commits(repo: &Repository, commits: &Vec<Commit>) -> Result<Oid, git2:
             //let merge = repo.find_object(merge, None)?;
             merge_objects_to_oid(
                 repo,
-                &cur.parents().next().unwrap().as_object(),
+                cur.parents().next().unwrap().as_object(),
                 &repo.find_object(merge, None)?,
-                &cur.as_object(),
+                cur.as_object(),
             )
         })
     })
