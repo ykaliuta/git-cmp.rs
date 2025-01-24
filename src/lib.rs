@@ -8,8 +8,8 @@ pub fn repo_open() -> Repository {
     Repository::open_from_env().unwrap()
 }
 
-fn revs_to_commits<'a, 'b>(repo: &'a Repository, refs: &'b Vec<String>) -> Vec<Commit<'a>> {
-    refs.into_iter()
+fn revs_to_commits<'a, 'b>(repo: &'a Repository, refs: &'b [String]) -> Vec<Commit<'a>> {
+    refs.iter()
         .filter_map(|ref_name| repo.revparse_single(ref_name).ok())
         .filter_map(|obj| obj.peel_to_commit().ok())
         .collect::<Vec<_>>()
