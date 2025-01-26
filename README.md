@@ -28,10 +28,10 @@ with any state of the repository.
 git-cmp commit <backported commit> [upstream commits...]
 ```
 
-where upstream commit is `HEAD` by default
+where upstream commit is `HEAD` by default.
 
 ```
 git-cmp branch <old branch> [<common upstream> [<current branch>]]
 ```
-where `common upstream` by default is `main` and `current branch` is `HEAD`
+where `common upstream` by default is `main` and `current branch` is `HEAD`.
 
