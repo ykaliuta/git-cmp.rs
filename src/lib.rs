@@ -38,10 +38,7 @@ pub fn cmp_commits(repo: &Repository, commit_ids: &[String]) -> Result<(Oid, Oid
     Ok((merge, squash))
 }
 
-pub fn cmp_branches(
-    repo: &Repository,
-    commit_ids: &[String],
-) -> Result<(Oid, Oid), git2::Error> {
+pub fn cmp_branches(repo: &Repository, commit_ids: &[String]) -> Result<(Oid, Oid), git2::Error> {
     let mut commit_ids = commit_ids.to_owned();
     if commit_ids.len() < 2 {
         commit_ids.push("main".to_string());
